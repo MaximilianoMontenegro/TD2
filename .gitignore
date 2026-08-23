@@ -1,0 +1,8 @@
+# Ignorar compilaciones de STM32CubeIDE
+Debug/
+Release/
+*.elf
+*.hex
+*.bin
+*.map
+.launches/
