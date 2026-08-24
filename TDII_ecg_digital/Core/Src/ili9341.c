@@ -10,6 +10,7 @@
 #if ILI9341_ENABLED
 #include "font5x7.h"
 #include <math.h>
+#include <stdio.h>
 
 uint16_t ILI9341_WIDTH  = ILI9341_TFTWIDTH;
 uint16_t ILI9341_HEIGHT = ILI9341_TFTHEIGHT;
@@ -328,17 +329,42 @@ void ILI9341_DrawLine(int16_t x0, int16_t y0,
     }
 }
 
-void ILI9341_DrawRectangle(uint16_t x, uint16_t y,
-                           uint16_t width, uint16_t height,
+void ILI9341_DrawRectangle(uint16_t x,
+                           uint16_t y,
+                           uint16_t width,
+                           uint16_t height,
                            uint16_t color)
 {
-    ILI9341_DrawLine(x, y, x + width - 1, y, color);
-    ILI9341_DrawLine(x, y + height - 1,
-                     x + width - 1, y + height - 1, color);
+    if (width == 0 || height == 0)
+        return;
 
-    ILI9341_DrawLine(x, y, x, y + height - 1, color);
-    ILI9341_DrawLine(x + width - 1, y,
-                     x + width - 1, y + height - 1, color);
+    ILI9341_DrawHLine(
+        x,
+        y,
+        width,
+        color
+    );
+
+    ILI9341_DrawHLine(
+        x,
+        y + height - 1,
+        width,
+        color
+    );
+
+    ILI9341_DrawVLine(
+        x,
+        y,
+        height,
+        color
+    );
+
+    ILI9341_DrawVLine(
+        x + width - 1,
+        y,
+        height,
+        color
+    );
 }
 
 void ILI9341_FillRectangle(uint16_t x, uint16_t y,
@@ -346,6 +372,9 @@ void ILI9341_FillRectangle(uint16_t x, uint16_t y,
                            uint16_t color)
 {
     if (x >= ILI9341_WIDTH || y >= ILI9341_HEIGHT)
+        return;
+
+    if (width == 0 || height == 0)
         return;
 
     if ((x + width) > ILI9341_WIDTH)
@@ -776,6 +805,812 @@ void ILI9341_DrawGraphColumn(uint16_t x,
         LCD_CS_GPIO_Port,
         LCD_CS_Pin,
         GPIO_PIN_SET
+    );
+}
+
+void ILI9341_DrawHLine(uint16_t x,
+                       uint16_t y,
+                       uint16_t width,
+                       uint16_t color)
+{
+    if (x >= ILI9341_WIDTH || y >= ILI9341_HEIGHT)
+        return;
+
+    if ((x + width) > ILI9341_WIDTH)
+    {
+        width = ILI9341_WIDTH - x;
+    }
+
+    ILI9341_SetAddressWindow(
+        x,
+        y,
+        x + width - 1,
+        y
+    );
+
+    HAL_GPIO_WritePin(
+        LCD_CS_GPIO_Port,
+        LCD_CS_Pin,
+        GPIO_PIN_RESET
+    );
+
+    // Comando Memory Write
+    HAL_GPIO_WritePin(
+        LCD_RS_GPIO_Port,
+        LCD_RS_Pin,
+        GPIO_PIN_RESET
+    );
+
+    LCD_Write8(0x2C);
+
+    // A partir de ahora enviamos datos
+    HAL_GPIO_WritePin(
+        LCD_RS_GPIO_Port,
+        LCD_RS_Pin,
+        GPIO_PIN_SET
+    );
+
+    uint8_t high = (color >> 8) & 0xFF;
+    uint8_t low  = color & 0xFF;
+
+    for (uint16_t i = 0; i < width; i++)
+    {
+        LCD_Write8(high);
+        LCD_Write8(low);
+    }
+
+    HAL_GPIO_WritePin(
+        LCD_CS_GPIO_Port,
+        LCD_CS_Pin,
+        GPIO_PIN_SET
+    );
+}
+
+void ILI9341_DrawVLine(uint16_t x,
+                       uint16_t y,
+                       uint16_t height,
+                       uint16_t color)
+{
+    // Verificar límites
+    if (x >= ILI9341_WIDTH || y >= ILI9341_HEIGHT)
+        return;
+
+    // Recortar si la línea supera la pantalla
+    if ((y + height) > ILI9341_HEIGHT)
+    {
+        height = ILI9341_HEIGHT - y;
+    }
+
+    // Configurar una ventana de 1 píxel de ancho
+    ILI9341_SetAddressWindow(
+        x,
+        y,
+        x,
+        y + height - 1
+    );
+
+    HAL_GPIO_WritePin(
+        LCD_CS_GPIO_Port,
+        LCD_CS_Pin,
+        GPIO_PIN_RESET
+    );
+
+    // Comando Memory Write
+    HAL_GPIO_WritePin(
+        LCD_RS_GPIO_Port,
+        LCD_RS_Pin,
+        GPIO_PIN_RESET
+    );
+
+    LCD_Write8(0x2C);
+
+    // Modo datos
+    HAL_GPIO_WritePin(
+        LCD_RS_GPIO_Port,
+        LCD_RS_Pin,
+        GPIO_PIN_SET
+    );
+
+    uint8_t high = (color >> 8) & 0xFF;
+    uint8_t low  = color & 0xFF;
+
+    // Enviar todos los píxeles consecutivamente
+    for (uint16_t i = 0; i < height; i++)
+    {
+        LCD_Write8(high);
+        LCD_Write8(low);
+    }
+
+    HAL_GPIO_WritePin(
+        LCD_CS_GPIO_Port,
+        LCD_CS_Pin,
+        GPIO_PIN_SET
+    );
+}
+
+void ILI9341_DrawTriangle(int16_t x0, int16_t y0,
+                          int16_t x1, int16_t y1,
+                          int16_t x2, int16_t y2,
+                          uint16_t color)
+{
+    // Lado 1
+    ILI9341_DrawLine(x0, y0, x1, y1, color);
+
+    // Lado 2
+    ILI9341_DrawLine(x1, y1, x2, y2, color);
+
+    // Lado 3
+    ILI9341_DrawLine(x2, y2, x0, y0, color);
+}
+
+void ILI9341_FillTriangle(int16_t x0, int16_t y0,
+                          int16_t x1, int16_t y1,
+                          int16_t x2, int16_t y2,
+                          uint16_t color)
+{
+    // Ordenar los vértices de arriba hacia abajo según Y
+    if (y0 > y1)
+    {
+        int16_t temp;
+
+        temp = y0; y0 = y1; y1 = temp;
+        temp = x0; x0 = x1; x1 = temp;
+    }
+
+    if (y1 > y2)
+    {
+        int16_t temp;
+
+        temp = y1; y1 = y2; y2 = temp;
+        temp = x1; x1 = x2; x2 = temp;
+    }
+
+    if (y0 > y1)
+    {
+        int16_t temp;
+
+        temp = y0; y0 = y1; y1 = temp;
+        temp = x0; x0 = x1; x1 = temp;
+    }
+
+
+    // Caso especial: los tres puntos están en la misma línea horizontal
+    if (y0 == y2)
+    {
+        int16_t xmin = x0;
+        int16_t xmax = x0;
+
+        if (x1 < xmin) xmin = x1;
+        if (x2 < xmin) xmin = x2;
+
+        if (x1 > xmax) xmax = x1;
+        if (x2 > xmax) xmax = x2;
+
+        ILI9341_DrawHLine(
+            xmin,
+            y0,
+            xmax - xmin + 1,
+            color
+        );
+
+        return;
+    }
+
+
+    int32_t dx01 = x1 - x0;
+    int32_t dy01 = y1 - y0;
+
+    int32_t dx02 = x2 - x0;
+    int32_t dy02 = y2 - y0;
+
+    int32_t dx12 = x2 - x1;
+    int32_t dy12 = y2 - y1;
+
+    int32_t sa = 0;
+    int32_t sb = 0;
+
+    int16_t y;
+    int16_t last;
+
+
+    // Si y1 == y2, la parte inferior no existe
+    if (y1 == y2)
+        last = y1;
+    else
+        last = y1 - 1;
+
+
+    // Parte superior del triángulo
+    for (y = y0; y <= last; y++)
+    {
+        int16_t a = x0 + sa / dy01;
+        int16_t b = x0 + sb / dy02;
+
+        sa += dx01;
+        sb += dx02;
+
+        if (a > b)
+        {
+            int16_t temp = a;
+            a = b;
+            b = temp;
+        }
+
+        ILI9341_DrawHLine(
+            a,
+            y,
+            b - a + 1,
+            color
+        );
+    }
+
+
+    // Parte inferior del triángulo
+    sa = dx12 * (y - y1);
+    sb = dx02 * (y - y0);
+
+    for (; y <= y2; y++)
+    {
+        int16_t a = x1 + sa / dy12;
+        int16_t b = x0 + sb / dy02;
+
+        sa += dx12;
+        sb += dx02;
+
+        if (a > b)
+        {
+            int16_t temp = a;
+            a = b;
+            b = temp;
+        }
+
+        ILI9341_DrawHLine(
+            a,
+            y,
+            b - a + 1,
+            color
+        );
+    }
+}
+
+void ILI9341_DrawRoundRect(uint16_t x,
+                           uint16_t y,
+                           uint16_t width,
+                           uint16_t height,
+                           uint16_t radius,
+                           uint16_t color)
+{
+    if (width == 0 || height == 0)
+        return;
+
+    if (radius * 2 > width)
+        radius = width / 2;
+
+    if (radius * 2 > height)
+        radius = height / 2;
+
+    // Líneas horizontales
+    ILI9341_DrawHLine(
+        x + radius,
+        y,
+        width - 2 * radius,
+        color
+    );
+
+    ILI9341_DrawHLine(
+        x + radius,
+        y + height - 1,
+        width - 2 * radius,
+        color
+    );
+
+    // Líneas verticales
+    ILI9341_DrawVLine(
+        x,
+        y + radius,
+        height - 2 * radius,
+        color
+    );
+
+    ILI9341_DrawVLine(
+        x + width - 1,
+        y + radius,
+        height - 2 * radius,
+        color
+    );
+
+    // Centros de las cuatro esquinas
+    int16_t cx1 = x + radius;
+    int16_t cx2 = x + width - radius - 1;
+
+    int16_t cy1 = y + radius;
+    int16_t cy2 = y + height - radius - 1;
+
+    // Dibujamos solo los cuartos de círculo necesarios
+    int16_t px = radius;
+    int16_t py = 0;
+    int16_t err = 0;
+
+    while (px >= py)
+    {
+        // Superior izquierda
+        ILI9341_DrawPixel(cx1 - px, cy1 - py, color);
+        ILI9341_DrawPixel(cx1 - py, cy1 - px, color);
+
+        // Superior derecha
+        ILI9341_DrawPixel(cx2 + px, cy1 - py, color);
+        ILI9341_DrawPixel(cx2 + py, cy1 - px, color);
+
+        // Inferior izquierda
+        ILI9341_DrawPixel(cx1 - px, cy2 + py, color);
+        ILI9341_DrawPixel(cx1 - py, cy2 + px, color);
+
+        // Inferior derecha
+        ILI9341_DrawPixel(cx2 + px, cy2 + py, color);
+        ILI9341_DrawPixel(cx2 + py, cy2 + px, color);
+
+        py++;
+
+        if (err <= 0)
+        {
+            err += 2 * py + 1;
+        }
+
+        if (err > 0)
+        {
+            px--;
+            err -= 2 * px + 1;
+        }
+    }
+}
+
+void ILI9341_FillRoundRect(uint16_t x,
+                           uint16_t y,
+                           uint16_t width,
+                           uint16_t height,
+                           uint16_t radius,
+                           uint16_t color)
+{
+    if (width == 0 || height == 0)
+        return;
+
+    if (radius * 2 > width)
+        radius = width / 2;
+
+    if (radius * 2 > height)
+        radius = height / 2;
+
+    // Rectángulo central
+    ILI9341_FillRectangle(
+        x + radius,
+        y,
+        width - 2 * radius,
+        height,
+        color
+    );
+
+    // Rectángulo lateral izquierdo
+    ILI9341_FillRectangle(
+        x,
+        y + radius,
+        radius,
+        height - 2 * radius,
+        color
+    );
+
+    // Rectángulo lateral derecho
+    ILI9341_FillRectangle(
+        x + width - radius,
+        y + radius,
+        radius,
+        height - 2 * radius,
+        color
+    );
+
+    // Relleno de las cuatro esquinas redondeadas
+    for (int16_t yy = 0; yy < radius; yy++)
+    {
+        for (int16_t xx = 0; xx < radius; xx++)
+        {
+            int16_t dx = radius - xx;
+            int16_t dy = radius - yy;
+
+            if ((dx * dx + dy * dy) <= (radius * radius))
+            {
+                // Superior izquierda
+                ILI9341_DrawPixel(
+                    x + xx,
+                    y + yy,
+                    color
+                );
+
+                // Superior derecha
+                ILI9341_DrawPixel(
+                    x + width - 1 - xx,
+                    y + yy,
+                    color
+                );
+
+                // Inferior izquierda
+                ILI9341_DrawPixel(
+                    x + xx,
+                    y + height - 1 - yy,
+                    color
+                );
+
+                // Inferior derecha
+                ILI9341_DrawPixel(
+                    x + width - 1 - xx,
+                    y + height - 1 - yy,
+                    color
+                );
+            }
+        }
+    }
+}
+
+void ILI9341_DrawProgressBar(uint16_t x,
+                             uint16_t y,
+                             uint16_t width,
+                             uint16_t height,
+                             uint16_t value,
+                             uint16_t maxValue,
+                             uint16_t fgColor,
+                             uint16_t bgColor,
+                             uint16_t borderColor)
+{
+    if (width < 3 || height < 3)
+        return;
+
+    if (maxValue == 0)
+        return;
+
+    if (value > maxValue)
+        value = maxValue;
+
+    // Dibujar borde
+    ILI9341_DrawRectangle(
+        x,
+        y,
+        width,
+        height,
+        borderColor
+    );
+
+    // Área interior
+    uint16_t innerWidth  = width - 2;
+    uint16_t innerHeight = height - 2;
+
+    // Calcular ancho correspondiente al progreso
+    uint32_t filledWidth =
+        ((uint32_t)value * innerWidth) / maxValue;
+
+    // Fondo
+    ILI9341_FillRectangle(
+        x + 1,
+        y + 1,
+        innerWidth,
+        innerHeight,
+        bgColor
+    );
+
+    // Parte completada
+    if (filledWidth > 0)
+    {
+        ILI9341_FillRectangle(
+            x + 1,
+            y + 1,
+            (uint16_t)filledWidth,
+            innerHeight,
+            fgColor
+        );
+    }
+}
+
+void ILI9341_DrawRoundProgressBar(uint16_t x,
+                                  uint16_t y,
+                                  uint16_t width,
+                                  uint16_t height,
+                                  uint16_t value,
+                                  uint16_t maxValue,
+                                  uint16_t fgColor,
+                                  uint16_t bgColor,
+                                  uint16_t borderColor)
+{
+    if (width < 5 || height < 5)
+        return;
+
+    if (maxValue == 0)
+        return;
+
+    if (value > maxValue)
+        value = maxValue;
+
+    uint16_t radius = height / 2;
+
+    // Fondo completo
+    ILI9341_FillRoundRect(
+        x,
+        y,
+        width,
+        height,
+        radius,
+        bgColor
+    );
+
+    // Borde
+    ILI9341_DrawRoundRect(
+        x,
+        y,
+        width,
+        height,
+        radius,
+        borderColor
+    );
+
+    uint16_t innerWidth = width - 4;
+
+    uint32_t filledWidth =
+        ((uint32_t)value * innerWidth) / maxValue;
+
+    if (filledWidth > 0)
+    {
+        uint16_t innerHeight = height - 4;
+        uint16_t innerRadius = innerHeight / 2;
+
+        ILI9341_FillRoundRect(
+            x + 2,
+            y + 2,
+            (uint16_t)filledWidth,
+            innerHeight,
+            innerRadius,
+            fgColor
+        );
+    }
+}
+
+void ILI9341_DrawButton(uint16_t x,
+                        uint16_t y,
+                        uint16_t width,
+                        uint16_t height,
+                        const char *text,
+                        uint16_t textColor,
+                        uint16_t fillColor,
+                        uint16_t borderColor,
+                        uint8_t textSize)
+{
+    if (width == 0 || height == 0 || text == NULL)
+        return;
+
+    // Radio de las esquinas
+    uint16_t radius = height / 5;
+
+    // Fondo del botón
+    ILI9341_FillRoundRect(
+        x,
+        y,
+        width,
+        height,
+        radius,
+        fillColor
+    );
+
+    // Borde
+    ILI9341_DrawRoundRect(
+        x,
+        y,
+        width,
+        height,
+        radius,
+        borderColor
+    );
+
+
+    // Calcular longitud del texto
+    uint16_t textLength = 0;
+
+    const char *ptr = text;
+
+    while (*ptr != '\0')
+    {
+        textLength++;
+        ptr++;
+    }
+
+
+    /*
+     * Nuestra fuente ocupa:
+     *
+     * 5 píxeles de carácter
+     * + 1 píxel de separación
+     *
+     * por lo tanto:
+     *
+     * ancho = 6 * textSize
+     *
+     * alto = 7 * textSize
+     */
+
+    uint16_t textWidth =
+        textLength * 6 * textSize;
+
+    uint16_t textHeight =
+        7 * textSize;
+
+
+    // Centrado horizontal
+    int16_t textX =
+        x + ((int32_t)width - textWidth) / 2;
+
+    // Centrado vertical
+    int16_t textY =
+        y + ((int32_t)height - textHeight) / 2;
+
+
+    // Evitar coordenadas negativas
+    if (textX < x)
+        textX = x;
+
+    if (textY < y)
+        textY = y;
+
+
+    // Dibujar texto
+    ILI9341_WriteString(
+        textX,
+        textY,
+        text,
+        textColor,
+        fillColor,
+        textSize
+    );
+}
+
+void ILI9341_WriteInt(uint16_t x,
+                      uint16_t y,
+                      int32_t value,
+                      uint16_t color,
+                      uint16_t bg,
+                      uint8_t size)
+{
+    char buffer[12];
+
+    snprintf(
+        buffer,
+        sizeof(buffer),
+        "%ld",
+        (long)value
+    );
+
+    ILI9341_WriteString(
+        x,
+        y,
+        buffer,
+        color,
+        bg,
+        size
+    );
+}
+
+void ILI9341_WriteFloat(uint16_t x,
+                        uint16_t y,
+                        float value,
+                        uint8_t decimals,
+                        uint16_t color,
+                        uint16_t bg,
+                        uint8_t size)
+{
+    char buffer[24];
+
+    if (decimals > 6)
+    {
+        decimals = 6;
+    }
+
+    snprintf(
+        buffer,
+        sizeof(buffer),
+        "%.*f",
+        decimals,
+        (double)value
+    );
+
+    ILI9341_WriteString(
+        x,
+        y,
+        buffer,
+        color,
+        bg,
+        size
+    );
+}
+
+void ILI9341_WriteValueUnit(uint16_t x,
+                            uint16_t y,
+                            float value,
+                            uint8_t decimals,
+                            const char *unit,
+                            uint16_t color,
+                            uint16_t bg,
+                            uint8_t size)
+{
+    // Primero escribimos el valor
+    ILI9341_WriteFloat(
+        x,
+        y,
+        value,
+        decimals,
+        color,
+        bg,
+        size
+    );
+
+    // Calculamos aproximadamente cuánto ocupa el número
+    uint16_t chars = 1;   // al menos un dígito
+
+    float temp = value;
+
+    if (temp < 0.0f)
+    {
+        chars++;      // signo '-'
+        temp = -temp;
+    }
+
+    uint32_t integerPart = (uint32_t)temp;
+
+    while (integerPart >= 10)
+    {
+        integerPart /= 10;
+        chars++;
+    }
+
+    // Punto decimal + decimales
+    if (decimals > 0)
+    {
+        chars += 1 + decimals;
+    }
+
+    // Cada carácter ocupa aproximadamente 6 * size píxeles
+    uint16_t unitX = x + chars * 6 * size;
+
+    // Dejamos un pequeño espacio
+    unitX += 3 * size;
+
+    ILI9341_WriteString(
+        unitX,
+        y,
+        unit,
+        color,
+        bg,
+        size
+    );
+}
+
+void ILI9341_UpdateValueUnit(uint16_t x,
+                             uint16_t y,
+                             uint16_t width,
+                             uint16_t height,
+                             float value,
+                             uint8_t decimals,
+                             const char *unit,
+                             uint16_t color,
+                             uint16_t bg,
+                             uint8_t size)
+{
+    // width y height quedan disponibles para futuras mejoras.
+    (void)width;
+    (void)height;
+
+    // Sobrescribimos directamente el valor anterior.
+    ILI9341_WriteValueUnit(
+        x,
+        y,
+        value,
+        decimals,
+        unit,
+        color,
+        bg,
+        size
     );
 }
 

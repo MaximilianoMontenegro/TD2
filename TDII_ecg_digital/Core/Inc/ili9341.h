@@ -33,7 +33,7 @@
 // habilito el uso de la libreria:
 // con '0' deshabilitas, con '1' lo habilitas
 // ============================================================================
-#define ILI9341_ENABLED 0
+#define ILI9341_ENABLED 1
 
 // ============================================================================
 // DIMENSIONES FISICAS DEL DISPLAY
@@ -397,5 +397,266 @@ void ILI9341_DrawGraphColumn(uint16_t x,
                              uint16_t gridColor,
                              uint16_t backgroundColor);
 
+/**
+ * @brief Dibuja una línea horizontal.
+ *
+ * @param x Coordenada X inicial.
+ * @param y Coordenada Y de la línea.
+ * @param width Longitud de la línea en píxeles.
+ * @param color Color de la línea en formato RGB565.
+ */
+void ILI9341_DrawHLine(uint16_t x,
+                       uint16_t y,
+                       uint16_t width,
+                       uint16_t color);
+
+/**
+ * @brief Dibuja una línea vertical.
+ *
+ * Utiliza una ventana de escritura para enviar los píxeles
+ * consecutivamente y reducir las operaciones necesarias.
+ *
+ * @param x Coordenada X de la línea.
+ * @param y Coordenada Y inicial.
+ * @param height Longitud de la línea en píxeles.
+ * @param color Color de la línea en formato RGB565.
+ */
+void ILI9341_DrawVLine(uint16_t x,
+                       uint16_t y,
+                       uint16_t height,
+                       uint16_t color);
+
+/**
+ * @brief Dibuja el contorno de un triángulo.
+ *
+ * El triángulo se define mediante tres puntos.
+ *
+ * @param x0 Coordenada X del primer vértice.
+ * @param y0 Coordenada Y del primer vértice.
+ * @param x1 Coordenada X del segundo vértice.
+ * @param y1 Coordenada Y del segundo vértice.
+ * @param x2 Coordenada X del tercer vértice.
+ * @param y2 Coordenada Y del tercer vértice.
+ * @param color Color del triángulo en formato RGB565.
+ */
+void ILI9341_DrawTriangle(int16_t x0, int16_t y0,
+                          int16_t x1, int16_t y1,
+                          int16_t x2, int16_t y2,
+                          uint16_t color);
+
+/**
+ * @brief Dibuja un triángulo completamente relleno.
+ *
+ * El triángulo se define mediante tres vértices.
+ *
+ * @param x0 Coordenada X del primer vértice.
+ * @param y0 Coordenada Y del primer vértice.
+ * @param x1 Coordenada X del segundo vértice.
+ * @param y1 Coordenada Y del segundo vértice.
+ * @param x2 Coordenada X del tercer vértice.
+ * @param y2 Coordenada Y del tercer vértice.
+ * @param color Color de relleno en formato RGB565.
+ */
+void ILI9341_FillTriangle(int16_t x0, int16_t y0,
+                          int16_t x1, int16_t y1,
+                          int16_t x2, int16_t y2,
+                          uint16_t color);
+
+/**
+ * @brief Dibuja el contorno de un rectángulo con esquinas redondeadas.
+ *
+ * @param x Coordenada X de la esquina superior izquierda.
+ * @param y Coordenada Y de la esquina superior izquierda.
+ * @param width Ancho del rectángulo en píxeles.
+ * @param height Alto del rectángulo en píxeles.
+ * @param radius Radio de las esquinas.
+ * @param color Color del contorno en formato RGB565.
+ */
+void ILI9341_DrawRoundRect(uint16_t x,
+                           uint16_t y,
+                           uint16_t width,
+                           uint16_t height,
+                           uint16_t radius,
+                           uint16_t color);
+
+/**
+ * @brief Dibuja un rectángulo relleno con esquinas redondeadas.
+ *
+ * @param x Coordenada X de la esquina superior izquierda.
+ * @param y Coordenada Y de la esquina superior izquierda.
+ * @param width Ancho del rectángulo en píxeles.
+ * @param height Alto del rectángulo en píxeles.
+ * @param radius Radio de las esquinas.
+ * @param color Color de relleno en formato RGB565.
+ */
+void ILI9341_FillRoundRect(uint16_t x,
+                           uint16_t y,
+                           uint16_t width,
+                           uint16_t height,
+                           uint16_t radius,
+                           uint16_t color);
+
+/**
+ * @brief Dibuja una barra de progreso.
+ *
+ * @param x Coordenada X de la esquina superior izquierda.
+ * @param y Coordenada Y de la esquina superior izquierda.
+ * @param width Ancho total de la barra.
+ * @param height Alto total de la barra.
+ * @param value Valor actual de progreso.
+ * @param maxValue Valor máximo de la escala.
+ * @param fgColor Color de la parte completada.
+ * @param bgColor Color de la parte no completada.
+ * @param borderColor Color del borde.
+ */
+void ILI9341_DrawProgressBar(uint16_t x,
+                             uint16_t y,
+                             uint16_t width,
+                             uint16_t height,
+                             uint16_t value,
+                             uint16_t maxValue,
+                             uint16_t fgColor,
+                             uint16_t bgColor,
+                             uint16_t borderColor);
+
+/**
+ * @brief Dibuja una barra de progreso con esquinas redondeadas.
+ *
+ * @param x Coordenada X de la esquina superior izquierda.
+ * @param y Coordenada Y de la esquina superior izquierda.
+ * @param width Ancho total de la barra.
+ * @param height Alto total de la barra.
+ * @param value Valor actual de progreso.
+ * @param maxValue Valor máximo de la escala.
+ * @param fgColor Color de la parte completada.
+ * @param bgColor Color de la parte no completada.
+ * @param borderColor Color del borde.
+ */
+void ILI9341_DrawRoundProgressBar(uint16_t x,
+                                  uint16_t y,
+                                  uint16_t width,
+                                  uint16_t height,
+                                  uint16_t value,
+                                  uint16_t maxValue,
+                                  uint16_t fgColor,
+                                  uint16_t bgColor,
+                                  uint16_t borderColor);
+
+/**
+ * @brief Dibuja un botón rectangular con esquinas redondeadas y texto centrado.
+ *
+ * @param x Coordenada X de la esquina superior izquierda.
+ * @param y Coordenada Y de la esquina superior izquierda.
+ * @param width Ancho del botón en píxeles.
+ * @param height Alto del botón en píxeles.
+ * @param text Texto que se mostrará en el botón.
+ * @param textColor Color del texto en formato RGB565.
+ * @param fillColor Color de relleno del botón.
+ * @param borderColor Color del borde del botón.
+ * @param textSize Tamaño de la fuente.
+ */
+void ILI9341_DrawButton(uint16_t x,
+                        uint16_t y,
+                        uint16_t width,
+                        uint16_t height,
+                        const char *text,
+                        uint16_t textColor,
+                        uint16_t fillColor,
+                        uint16_t borderColor,
+                        uint8_t textSize);
+
+/**
+ * @brief Escribe un número entero en la pantalla.
+ *
+ * Convierte automáticamente el valor entero a texto y lo muestra
+ * utilizando la fuente del driver.
+ *
+ * @param x Coordenada X inicial.
+ * @param y Coordenada Y inicial.
+ * @param value Valor entero que se desea mostrar.
+ * @param color Color del texto en formato RGB565.
+ * @param bg Color de fondo en formato RGB565.
+ * @param size Factor de escala del texto.
+ */
+void ILI9341_WriteInt(uint16_t x,
+                      uint16_t y,
+                      int32_t value,
+                      uint16_t color,
+                      uint16_t bg,
+                      uint8_t size);
+
+/**
+ * @brief Escribe un número decimal en la pantalla.
+ *
+ * Convierte automáticamente un valor de tipo float a texto y lo muestra
+ * utilizando la fuente del driver.
+ *
+ * @param x Coordenada X inicial.
+ * @param y Coordenada Y inicial.
+ * @param value Valor decimal que se desea mostrar.
+ * @param decimals Cantidad de cifras decimales a mostrar.
+ * @param color Color del texto en formato RGB565.
+ * @param bg Color de fondo en formato RGB565.
+ * @param size Factor de escala del texto.
+ */
+void ILI9341_WriteFloat(uint16_t x,
+                        uint16_t y,
+                        float value,
+                        uint8_t decimals,
+                        uint16_t color,
+                        uint16_t bg,
+                        uint8_t size);
+
+/**
+ * @brief Escribe un valor decimal seguido de una unidad.
+ *
+ * Ejemplo:
+ * 2.73 V
+ *
+ * @param x Coordenada X inicial.
+ * @param y Coordenada Y inicial.
+ * @param value Valor decimal.
+ * @param decimals Cantidad de decimales.
+ * @param unit Cadena con la unidad, por ejemplo "V", "Hz" o "%".
+ * @param color Color del texto.
+ * @param bg Color de fondo.
+ * @param size Tamaño del texto.
+ */
+void ILI9341_WriteValueUnit(uint16_t x,
+                            uint16_t y,
+                            float value,
+                            uint8_t decimals,
+                            const char *unit,
+                            uint16_t color,
+                            uint16_t bg,
+                            uint8_t size);
+
+/**
+ * @brief Actualiza un valor decimal con unidad dentro de un área fija.
+ *
+ * Primero limpia el área indicada y luego escribe el nuevo valor,
+ * evitando que queden restos del valor anterior.
+ *
+ * @param x Coordenada X inicial del campo.
+ * @param y Coordenada Y inicial del campo.
+ * @param width Ancho del área a limpiar.
+ * @param height Alto del área a limpiar.
+ * @param value Valor decimal a mostrar.
+ * @param decimals Cantidad de decimales.
+ * @param unit Unidad, por ejemplo "V", "HZ", "%".
+ * @param color Color del texto.
+ * @param bg Color de fondo.
+ * @param size Tamaño del texto.
+ */
+void ILI9341_UpdateValueUnit(uint16_t x,
+                             uint16_t y,
+                             uint16_t width,
+                             uint16_t height,
+                             float value,
+                             uint8_t decimals,
+                             const char *unit,
+                             uint16_t color,
+                             uint16_t bg,
+                             uint8_t size);
 
 #endif /* INC_ILI9341_H_ */
