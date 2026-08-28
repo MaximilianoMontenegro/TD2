@@ -659,4 +659,281 @@ void ILI9341_UpdateValueUnit(uint16_t x,
                              uint16_t bg,
                              uint8_t size);
 
+/**
+ * @brief Actualiza un valor decimal con unidad utilizando un campo de ancho fijo.
+ *
+ * El valor se alinea dentro de una cantidad fija de caracteres para evitar
+ * restos del contenido anterior cuando cambia la cantidad de dígitos.
+ *
+ * @param x Coordenada X inicial.
+ * @param y Coordenada Y inicial.
+ * @param value Valor decimal a mostrar.
+ * @param decimals Cantidad de decimales.
+ * @param unit Unidad, por ejemplo "V", "HZ" o "%".
+ * @param fieldWidth Cantidad total de caracteres reservados para el campo.
+ * @param color Color del texto.
+ * @param bg Color de fondo.
+ * @param size Tamaño del texto.
+ */
+void ILI9341_UpdateValueFixed(uint16_t x,
+                              uint16_t y,
+                              float value,
+                              uint8_t decimals,
+                              const char *unit,
+                              uint8_t fieldWidth,
+                              uint16_t color,
+                              uint16_t bg,
+                              uint8_t size);
+
+/**
+ * @brief Dibuja una línea discontinua entre dos puntos.
+ *
+ * @param x0 Coordenada X inicial.
+ * @param y0 Coordenada Y inicial.
+ * @param x1 Coordenada X final.
+ * @param y1 Coordenada Y final.
+ * @param color Color de la línea.
+ * @param dashLength Longitud de cada tramo visible.
+ * @param gapLength Longitud de cada espacio.
+ */
+void ILI9341_DrawDashedLine(int16_t x0,
+                            int16_t y0,
+                            int16_t x1,
+                            int16_t y1,
+                            uint16_t color,
+                            uint8_t dashLength,
+                            uint8_t gapLength);
+
+/**
+ * @brief Dibuja una línea horizontal discontinua.
+ *
+ * @param x Coordenada X inicial.
+ * @param y Coordenada Y de la línea.
+ * @param width Longitud total de la línea.
+ * @param color Color de la línea.
+ * @param dashLength Longitud de cada tramo visible.
+ * @param gapLength Longitud de cada espacio.
+ */
+void ILI9341_DrawDashedHLine(uint16_t x,
+                             uint16_t y,
+                             uint16_t width,
+                             uint16_t color,
+                             uint16_t dashLength,
+                             uint16_t gapLength);
+
+/**
+ * @brief Dibuja una línea vertical discontinua.
+ *
+ * @param x Coordenada X de la línea.
+ * @param y Coordenada Y inicial.
+ * @param height Longitud total de la línea.
+ * @param color Color de la línea.
+ * @param dashLength Longitud de cada tramo visible.
+ * @param gapLength Longitud de cada espacio.
+ */
+void ILI9341_DrawDashedVLine(uint16_t x,
+                             uint16_t y,
+                             uint16_t height,
+                             uint16_t color,
+                             uint16_t dashLength,
+                             uint16_t gapLength);
+
+/**
+ * @brief Dibuja una línea horizontal de referencia con una etiqueta.
+ *
+ * @param x Coordenada X inicial de la línea.
+ * @param y Coordenada Y de la referencia.
+ * @param width Longitud de la línea.
+ * @param label Texto de la etiqueta, por ejemplo "1.0 V".
+ * @param lineColor Color de la línea.
+ * @param textColor Color del texto.
+ * @param bgColor Color de fondo.
+ * @param textSize Tamaño del texto.
+ */
+void ILI9341_DrawReferenceLine(uint16_t x,
+                               uint16_t y,
+                               uint16_t width,
+                               const char *label,
+                               uint16_t lineColor,
+                               uint16_t textColor,
+                               uint16_t bgColor,
+                               uint8_t textSize);
+
+/**
+ * @brief Dibuja una escala vertical con líneas de referencia y valores.
+ *
+ * @param x Coordenada X inicial de las líneas.
+ * @param y Coordenada Y superior del gráfico.
+ * @param width Ancho de las líneas de referencia.
+ * @param height Alto total del gráfico.
+ * @param minValue Valor mínimo de la escala.
+ * @param maxValue Valor máximo de la escala.
+ * @param divisions Cantidad de divisiones verticales.
+ * @param unit Unidad a mostrar, por ejemplo "V".
+ * @param lineColor Color de las líneas.
+ * @param textColor Color de los valores.
+ * @param bgColor Color de fondo.
+ * @param textSize Tamaño del texto.
+ */
+void ILI9341_DrawVerticalScale(uint16_t x,
+                               uint16_t y,
+                               uint16_t width,
+                               uint16_t height,
+                               float minValue,
+                               float maxValue,
+                               uint8_t divisions,
+                               const char *unit,
+                               uint16_t lineColor,
+                               uint16_t textColor,
+                               uint16_t bgColor,
+                               uint8_t textSize);
+
+/**
+ * @brief Dibuja una escala horizontal de tiempo debajo de un gráfico.
+ *
+ * Distribuye automáticamente las marcas de tiempo a lo largo del ancho
+ * especificado y muestra el tiempo correspondiente en segundos.
+ *
+ * @param x Coordenada X inicial del gráfico.
+ * @param y Coordenada Y donde se dibujarán las marcas de tiempo.
+ * @param width Ancho total del gráfico en píxeles.
+ * @param totalTime Tiempo total representado por el gráfico, en segundos.
+ * @param divisions Cantidad de divisiones del eje temporal.
+ * @param lineColor Color de las marcas verticales.
+ * @param textColor Color del texto.
+ * @param bgColor Color de fondo del texto.
+ * @param textSize Tamaño del texto.
+ */
+void ILI9341_DrawTimeScale(uint16_t x,
+                           uint16_t y,
+                           uint16_t width,
+                           float totalTime,
+                           uint8_t divisions,
+                           uint16_t lineColor,
+                           uint16_t textColor,
+                           uint16_t bgColor,
+                           uint8_t textSize);
+
+/**
+ * @brief Dibuja los ejes principales de un gráfico con divisiones.
+ *
+ * @param x Coordenada X inicial del gráfico.
+ * @param y Coordenada Y inicial del gráfico.
+ * @param width Ancho del gráfico en píxeles.
+ * @param height Alto del gráfico en píxeles.
+ * @param xDivisions Cantidad de divisiones sobre el eje X.
+ * @param yDivisions Cantidad de divisiones sobre el eje Y.
+ * @param axisColor Color de los ejes.
+ * @param gridColor Color de las divisiones internas.
+ */
+void ILI9341_DrawGraphAxes(uint16_t x,
+                           uint16_t y,
+                           uint16_t width,
+                           uint16_t height,
+                           uint8_t xDivisions,
+                           uint8_t yDivisions,
+                           uint16_t axisColor,
+                           uint16_t gridColor);
+
+/**
+ * @brief Dibuja el marco completo de un gráfico con grilla interna.
+ *
+ * @param x Coordenada X inicial.
+ * @param y Coordenada Y inferior del gráfico.
+ * @param width Ancho del gráfico.
+ * @param height Alto del gráfico.
+ * @param xDivisions Cantidad de divisiones verticales.
+ * @param yDivisions Cantidad de divisiones horizontales.
+ * @param borderColor Color del borde.
+ * @param gridColor Color de la grilla.
+ */
+void ILI9341_DrawGraphFrame(uint16_t x,
+                            uint16_t y,
+                            uint16_t width,
+                            uint16_t height,
+                            uint8_t xDivisions,
+                            uint8_t yDivisions,
+                            uint16_t borderColor,
+                            uint16_t gridColor);
+
+/**
+ * @brief Dibuja una plantilla completa de gráfico.
+ *
+ * Combina marco, grilla, escala vertical y escala horizontal de tiempo.
+ *
+ * @param x Coordenada X inicial del gráfico.
+ * @param y Coordenada Y inferior del gráfico.
+ * @param width Ancho total del gráfico.
+ * @param height Alto total del gráfico.
+ * @param minValue Valor mínimo de la escala vertical.
+ * @param maxValue Valor máximo de la escala vertical.
+ * @param yDivisions Cantidad de divisiones verticales.
+ * @param totalTime Tiempo total representado en el eje X.
+ * @param xDivisions Cantidad de divisiones temporales.
+ * @param unit Unidad de la escala vertical, por ejemplo "V".
+ * @param borderColor Color del marco.
+ * @param gridColor Color de la grilla.
+ * @param textColor Color de las etiquetas.
+ * @param bgColor Color de fondo.
+ * @param textSize Tamaño del texto.
+ */
+void ILI9341_DrawGraphTemplate(uint16_t x,
+                               uint16_t y,
+                               uint16_t width,
+                               uint16_t height,
+                               float minValue,
+                               float maxValue,
+                               uint8_t yDivisions,
+                               float totalTime,
+                               uint8_t xDivisions,
+                               const char *unit,
+                               uint16_t borderColor,
+                               uint16_t gridColor,
+                               uint16_t textColor,
+                               uint16_t bgColor,
+                               uint8_t textSize);
+
+/**
+ * @brief Convierte un valor físico en una coordenada Y dentro de un gráfico.
+ *
+ * @param value Valor que se desea representar.
+ * @param minValue Valor mínimo de la escala.
+ * @param maxValue Valor máximo de la escala.
+ * @param graphY Coordenada Y inferior del gráfico.
+ * @param graphHeight Alto del gráfico en píxeles.
+ *
+ * @return Coordenada Y correspondiente dentro del gráfico.
+ */
+int16_t ILI9341_GraphValueToY(float value,
+                              float minValue,
+                              float maxValue,
+                              uint16_t graphY,
+                              uint16_t graphHeight);
+
+/**
+ * @brief Dibuja una columna de gráfico dejando una zona inferior
+ *        reservada para la escala temporal.
+ *
+ * @param x Columna de memoria a actualizar.
+ * @param graphY Coordenada Y inferior del área de señal.
+ * @param graphHeight Alto del área destinada a la señal.
+ * @param yPrevious Coordenada Y de la muestra anterior.
+ * @param yNew Coordenada Y de la nueva muestra.
+ * @param verticalGrid Indica si corresponde dibujar una línea vertical.
+ * @param signalColor Color de la señal.
+ * @param gridColor Color de la grilla.
+ * @param backgroundColor Color de fondo.
+ */
+void ILI9341_DrawGraphColumnWithTimeAxis(
+    uint16_t x,
+    uint16_t graphY,
+    uint16_t graphHeight,
+    int16_t yPrevious,
+    int16_t yNew,
+    uint8_t verticalGrid,
+    uint16_t signalColor,
+    uint16_t gridColor,
+    uint16_t backgroundColor
+);
+
 #endif /* INC_ILI9341_H_ */
