@@ -133,6 +133,33 @@ static void ECG_ResetFilters(void);
 static void ECG_PlotBlock(const int16_t *p, uint16_t n);
 /* USER CODE END PFP */
 
+// funcion encargada de configurar la pantalla
+static void LCD_Config(void)
+{
+    ILI9341_Init();
+    ILI9341_SetRotation(1);
+    ILI9341_FillScreen(ILI9341_BLACK);
+
+    ILI9341_SetScrollArea(PANEL_W, GRAPH_W, 0);
+
+    ILI9341_FillRectangle(0, 0, PANEL_W, 240, ILI9341_BLUE);
+    ILI9341_DrawVLine(PANEL_W - 1, 0, 240, ILI9341_WHITE);
+
+    ILI9341_WriteString(8, 20, "ECG",
+                        ILI9341_WHITE, ILI9341_BLUE, 2);
+
+    ILI9341_WriteString(8, 200, "RUN",
+                        ILI9341_GREEN, ILI9341_BLUE, 2);
+
+    ILI9341_UpdateValueFixed(5, 65, 1.65f, 2, "V", 8,
+                             ILI9341_YELLOW, ILI9341_BLUE, 1);
+
+    ILI9341_DrawHLine(PANEL_W, TIME_AXIS_Y,
+                      GRAPH_W, ILI9341_WHITE);
+
+    HAL_Delay(20);
+}
+
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -172,32 +199,8 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  /* El StreamBuffer se crea antes que la tarea que lo escribe. */
-  ecgStream = xStreamBufferCreate(DSP_BLOCK_SIZE * sizeof(int16_t) * 4,
-                                  DSP_BLOCK_SIZE * sizeof(int16_t));
-  configASSERT(ecgStream != NULL);
-
-  /* ---- Pantalla: init y UI estatica (una sola vez, antes del scheduler) ---- */
-  ILI9341_Init();
-  ILI9341_SetRotation(1);                 /* apaisado: 320 x 240 */
-  ILI9341_FillScreen(ILI9341_BLACK);
-
-  /* Scroll por hardware: 70 px fijos + 250 px desplazables = 320. */
-  ILI9341_SetScrollArea(PANEL_W, GRAPH_W, 0);
-
-  /* Panel lateral fijo */
-  ILI9341_FillRectangle(0, 0, PANEL_W, 240, ILI9341_BLUE);
-  ILI9341_DrawVLine(PANEL_W - 1, 0, 240, ILI9341_WHITE);
-
-  ILI9341_WriteString(8,  20, "ECG",  ILI9341_WHITE, ILI9341_BLUE, 2);
-  ILI9341_WriteString(8, 200, "RUN",  ILI9341_GREEN, ILI9341_BLUE, 2);
-  ILI9341_UpdateValueFixed(5, 65, 1.65f, 2, "V", 8,
-                           ILI9341_YELLOW, ILI9341_BLUE, 1);
-
-  /* Eje temporal */
-  ILI9341_DrawHLine(PANEL_W, TIME_AXIS_Y, GRAPH_W, ILI9341_WHITE);
-
-  HAL_Delay(20);  /* espera a que se estabilice la pantalla antes de iniciar el ADC */
+  /*Configo la pantalla*/
+  LCD_Config();
 
   /* USER CODE END 2 */
 
@@ -217,7 +220,13 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+
+  /* El StreamBuffer se crea antes que la tarea que lo escribe. */
+  ecgStream = xStreamBufferCreate(DSP_BLOCK_SIZE * sizeof(int16_t) * 4,
+                                  DSP_BLOCK_SIZE * sizeof(int16_t));
+
+
+  configASSERT(ecgStream != NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -659,13 +668,63 @@ void vTask_DSP(void *pvParameters) {
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END 5 */
+    int16_t display_block[DSP_BLOCK_SIZE];
+
+    uint16_t x = PANEL_W;
+    uint16_t yPrev = GRAPH_Y + (GRAPH_H / 2);
+
+    for (;;)
+    {
+        size_t received = xStreamBufferReceive(
+            ecgStream,
+            display_block,
+            sizeof(display_block),
+            portMAX_DELAY
+        );
+
+        if (received == sizeof(display_block))
+        {
+            for (uint16_t i = 0; i < DSP_BLOCK_SIZE; i++)
+            {
+                /*
+                 * La señal filtrada queda centrada aproximadamente en 0.
+                 * Por ahora usamos una escala fija de -500 a +500.
+                 */
+                uint16_t yNew = ILI9341_GraphValueToY(
+                    (float)display_block[i],
+                    -500.0f,
+                     500.0f,
+                    GRAPH_Y,
+                    GRAPH_Y + GRAPH_H - 1
+                );
+
+                /*
+                 * Línea vertical de grilla cada 50 píxeles.
+                 */
+                uint8_t verticalGrid =
+                    (((x - PANEL_W) % 50) == 0);
+
+                ILI9341_DrawGraphColumn(
+                    x,
+                    yPrev,
+                    yNew,
+                    verticalGrid,
+                    ILI9341_GREEN,   /* señal */
+                    ILI9341_GRAY,    /* grilla */
+                    ILI9341_BLACK    /* fondo */
+                );
+
+                yPrev = yNew;
+
+                x++;
+
+                if (x >= (PANEL_W + GRAPH_W))
+                {
+                    x = PANEL_W;
+                }
+            }
+        }
+    }
 }
 
 /**
