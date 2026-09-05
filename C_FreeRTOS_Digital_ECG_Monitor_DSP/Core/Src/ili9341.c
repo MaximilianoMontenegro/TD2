@@ -12,6 +12,11 @@
 #include <math.h>
 #include <stdio.h>
 
+/* Banda del grafico donde se dibuja la grilla de papel de ECG. */
+#define ECG_GRID_TOP     22u
+#define ECG_GRID_BOTTOM 220u
+#define ECG_GRID_FINE   0x3000   /* rojo muy oscuro: cuadrito chico */
+
 uint16_t ILI9341_WIDTH  = ILI9341_TFTWIDTH;
 uint16_t ILI9341_HEIGHT = ILI9341_TFTHEIGHT;
 
@@ -720,92 +725,46 @@ void ILI9341_DrawGraphColumn(uint16_t x,
                              uint16_t gridColor,
                              uint16_t backgroundColor)
 {
-    if (x >= ILI9341_WIDTH)
-        return;
+    if (x >= ILI9341_WIDTH) return;
 
-    if (yPrevious < 0)
-        yPrevious = 0;
-
-    if (yPrevious >= ILI9341_HEIGHT)
-        yPrevious = ILI9341_HEIGHT - 1;
-
-    if (yNew < 0)
-        yNew = 0;
-
-    if (yNew >= ILI9341_HEIGHT)
-        yNew = ILI9341_HEIGHT - 1;
-
+    if (yPrevious < 0) yPrevious = 0;
+    if (yPrevious >= ILI9341_HEIGHT) yPrevious = ILI9341_HEIGHT - 1;
+    if (yNew < 0) yNew = 0;
+    if (yNew >= ILI9341_HEIGHT) yNew = ILI9341_HEIGHT - 1;
 
     int16_t yMin = (yPrevious < yNew) ? yPrevious : yNew;
     int16_t yMax = (yPrevious > yNew) ? yPrevious : yNew;
 
+    ILI9341_SetAddressWindow(x, 0, x, ILI9341_HEIGHT - 1);
 
-    // Seleccionamos una sola columna completa
-    ILI9341_SetAddressWindow(
-        x,
-        0,
-        x,
-        ILI9341_HEIGHT - 1
-    );
-
-    HAL_GPIO_WritePin(
-        LCD_CS_GPIO_Port,
-        LCD_CS_Pin,
-        GPIO_PIN_RESET
-    );
-
-    // Memory Write
-    HAL_GPIO_WritePin(
-        LCD_RS_GPIO_Port,
-        LCD_RS_Pin,
-        GPIO_PIN_RESET
-    );
-
+    HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_RESET);
     LCD_Write8(0x2C);
-
-    // Datos
-    HAL_GPIO_WritePin(
-        LCD_RS_GPIO_Port,
-        LCD_RS_Pin,
-        GPIO_PIN_SET
-    );
-
+    HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_SET);
 
     for (uint16_t y = 0; y < ILI9341_HEIGHT; y++)
     {
         uint16_t color = backgroundColor;
 
-        // Si corresponde una línea vertical de grilla,
-        // toda la columna empieza siendo gris
-        if (verticalGrid)
+        if (y >= ECG_GRID_TOP && y < ECG_GRID_BOTTOM)
         {
-            color = gridColor;
+            uint16_t ry = y - ECG_GRID_TOP;
+
+            /* Papel de ECG: cuadrito chico cada 10 px, cuadro grande cada
+               50 px. El orden importa: lo grueso siempre pisa lo fino. */
+            if (verticalGrid == 1u)  { color = ECG_GRID_FINE; }
+            if ((ry % 5u) == 0u)     { color = ECG_GRID_FINE; }
+            if (verticalGrid >= 2u)  { color = gridColor; }
+            if ((ry % 25u) == 0u)    { color = gridColor; }
         }
 
-        // Líneas horizontales
-        if ((y == 60) ||
-            (y == 120) ||
-            (y == 180))
-        {
-            color = gridColor;
-        }
-
-        // La señal siempre queda por encima de la grilla
-        if ((y >= yMin) && (y <= yMax))
-        {
-            color = signalColor;
-        }
+        if ((y >= yMin) && (y <= yMax)) { color = signalColor; }
 
         LCD_Write8((color >> 8) & 0xFF);
         LCD_Write8(color & 0xFF);
     }
 
-
-    HAL_GPIO_WritePin(
-        LCD_CS_GPIO_Port,
-        LCD_CS_Pin,
-        GPIO_PIN_SET
-    );
+    HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
 }
 
 void ILI9341_DrawHLine(uint16_t x,
