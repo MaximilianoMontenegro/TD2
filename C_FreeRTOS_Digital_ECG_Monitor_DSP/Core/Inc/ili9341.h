@@ -1,4 +1,4 @@
-/*/**
+/**
  ******************************************************************************
  * @file    ili9341.h
  * @brief   Driver para display TFT ILI9341 con interfaz paralela de 8 bits.

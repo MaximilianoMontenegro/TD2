@@ -1,0 +1,5 @@
+numpy
+scipy
+matplotlib
+# opcional: compilador de C para correr en la PC el detector del firmware (correr_detector_c.py)
+ziglang

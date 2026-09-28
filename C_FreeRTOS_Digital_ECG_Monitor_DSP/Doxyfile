@@ -1,0 +1,25 @@
+# Documentacion del Monitor de ECG (TD II - UTN FRBA)
+# Uso: instalar Doxygen (https://www.doxygen.nl) y ejecutar "doxygen" en esta
+# carpeta. Abrir docs/html/index.html.
+PROJECT_NAME           = "Monitor de ECG digital"
+PROJECT_BRIEF          = "STM32F446 + AD8232 + ILI9341 + microSD sobre FreeRTOS"
+OUTPUT_DIRECTORY       = docs
+OUTPUT_LANGUAGE        = Spanish
+INPUT                  = Core/Inc/ecg_config.h \
+                         Core/Inc/ad8232.h Core/Src/ad8232.c \
+                         Core/Inc/ecg_dsp.h Core/Src/ecg_dsp.c \
+                         Core/Inc/ecg_qrs.h Core/Src/ecg_qrs.c \
+                         Core/Inc/ecg_display.h Core/Src/ecg_display.c \
+                         Core/Inc/ecg_logger.h Core/Src/ecg_logger.c \
+                         Core/Inc/sd_spi.h Core/Src/sd_spi.c \
+                         Core/Inc/ili9341.h \
+                         FATFS/Target/user_diskio.c \
+                         Core/Src/main.c
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
+SOURCE_BROWSER         = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO
+QUIET                  = YES

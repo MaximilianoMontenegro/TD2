@@ -13,15 +13,67 @@
 #include <stdio.h>
 
 /* Banda del grafico donde se dibuja la grilla de papel de ECG. */
-#define ECG_GRID_TOP     22u
-#define ECG_GRID_BOTTOM 220u
-#define ECG_GRID_FINE   0x3000   /* rojo muy oscuro: cuadrito chico */
+#define ECG_GRID_TOP    160u   /* mitad inferior de la pantalla vertical 240 x 320 */
+#define ECG_GRID_BOTTOM 320u
+#define ECG_GRID_PHASE   20u   /* la fila central (80) cae sobre un cuadro grande */
+#define ECG_GRID_FINE   0x6000   /* rojo medio: cuadrito chico */
 
 uint16_t ILI9341_WIDTH  = ILI9341_TFTWIDTH;
 uint16_t ILI9341_HEIGHT = ILI9341_TFTHEIGHT;
 
+/* ---- Bus paralelo rapido ----
+   El bus de datos del shield esta repartido entre GPIOA, GPIOB y GPIOC. Se
+   precalcula, para cada uno de los 256 valores posibles, el valor de BSRR de
+   cada puerto (mitad baja = poner en 1, mitad alta = poner en 0). Escribir un
+   byte pasa de 10 llamadas a HAL_GPIO_WritePin a 3 stores + el pulso de WR,
+   unas 10 veces mas rapido. Con 0 se vuelve a la version original con HAL. */
+#define ILI9341_FAST_BUS 1
+
+#if ILI9341_FAST_BUS
+static uint32_t lcd_bsrr_a[256];
+static uint32_t lcd_bsrr_b[256];
+static uint32_t lcd_bsrr_c[256];
+
+/* Arma las tablas a partir de los pines definidos en main.h (CubeMX), asi
+   no depende de un mapeo escrito a mano. Todos los D0..D7 deben estar en
+   GPIOA, GPIOB o GPIOC. */
+static void LCD_BuildBusTables(void)
+{
+    GPIO_TypeDef *const port[8] = { LCD_D0_GPIO_Port, LCD_D1_GPIO_Port,
+                                    LCD_D2_GPIO_Port, LCD_D3_GPIO_Port,
+                                    LCD_D4_GPIO_Port, LCD_D5_GPIO_Port,
+                                    LCD_D6_GPIO_Port, LCD_D7_GPIO_Port };
+    const uint16_t pin[8] = { LCD_D0_Pin, LCD_D1_Pin, LCD_D2_Pin, LCD_D3_Pin,
+                              LCD_D4_Pin, LCD_D5_Pin, LCD_D6_Pin, LCD_D7_Pin };
+    GPIO_TypeDef *const P[3] = { GPIOA, GPIOB, GPIOC };
+    uint32_t     *const T[3] = { lcd_bsrr_a, lcd_bsrr_b, lcd_bsrr_c };
+
+    for (uint32_t v = 0; v < 256u; v++) {
+        for (uint8_t p = 0; p < 3u; p++) {
+            uint32_t set = 0u, mask = 0u;
+            for (uint8_t b = 0; b < 8u; b++) {
+                if (port[b] != P[p]) { continue; }
+                mask |= pin[b];
+                if (v & (1u << b)) { set |= pin[b]; }
+            }
+            T[p][v] = set | ((mask & ~set) << 16);
+        }
+    }
+}
+#endif
+
 static void LCD_Write8(uint8_t data)
 {
+#if ILI9341_FAST_BUS
+    GPIOA->BSRR = lcd_bsrr_a[data];
+    GPIOB->BSRR = lcd_bsrr_b[data];
+    GPIOC->BSRR = lcd_bsrr_c[data];
+
+    /* Pulso de escritura: el ILI9341 toma el dato en el flanco de subida.
+       Un store en bajo dura >= 24 ns a 84 MHz (minimo del ILI9341: 15 ns). */
+    LCD_WR_GPIO_Port->BSRR = (uint32_t)LCD_WR_Pin << 16;
+    LCD_WR_GPIO_Port->BSRR = (uint32_t)LCD_WR_Pin;
+#else
     HAL_GPIO_WritePin(LCD_D0_GPIO_Port, LCD_D0_Pin,
                       (data & 0x01) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
@@ -49,6 +101,7 @@ static void LCD_Write8(uint8_t data)
     // Pulso de escritura
     HAL_GPIO_WritePin(LCD_WR_GPIO_Port, LCD_WR_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LCD_WR_GPIO_Port, LCD_WR_Pin, GPIO_PIN_SET);
+#endif
 }
 
 static void LCD_WriteCommand(uint8_t cmd)
@@ -118,6 +171,9 @@ static void LCD_WriteCommandData(uint8_t cmd,
 
 void ILI9341_Init(void)
 {
+#if ILI9341_FAST_BUS
+    LCD_BuildBusTables();
+#endif
     LCD_Reset();
 
     uint8_t data[5];
@@ -727,38 +783,39 @@ void ILI9341_DrawGraphColumn(uint16_t x,
 {
     if (x >= ILI9341_WIDTH) return;
 
-    if (yPrevious < 0) yPrevious = 0;
-    if (yPrevious >= ILI9341_HEIGHT) yPrevious = ILI9341_HEIGHT - 1;
-    if (yNew < 0) yNew = 0;
-    if (yNew >= ILI9341_HEIGHT) yNew = ILI9341_HEIGHT - 1;
+    /* Solo se escribe la banda del grafico: el panel de datos no se toca
+       y cada columna cuesta la mitad de pixeles que la pantalla entera. */
+    const int16_t top = (int16_t)ECG_GRID_TOP;
+    const int16_t bot = (int16_t)ECG_GRID_BOTTOM - 1;
+
+    if (yPrevious < top) yPrevious = top;
+    if (yPrevious > bot) yPrevious = bot;
+    if (yNew < top) yNew = top;
+    if (yNew > bot) yNew = bot;
 
     int16_t yMin = (yPrevious < yNew) ? yPrevious : yNew;
     int16_t yMax = (yPrevious > yNew) ? yPrevious : yNew;
 
-    ILI9341_SetAddressWindow(x, 0, x, ILI9341_HEIGHT - 1);
+    ILI9341_SetAddressWindow(x, ECG_GRID_TOP, x, ECG_GRID_BOTTOM - 1);
 
     HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_RESET);
     LCD_Write8(0x2C);
     HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_SET);
 
-    for (uint16_t y = 0; y < ILI9341_HEIGHT; y++)
+    for (uint16_t y = ECG_GRID_TOP; y < ECG_GRID_BOTTOM; y++)
     {
         uint16_t color = backgroundColor;
+        uint16_t ry = (uint16_t)(y - ECG_GRID_TOP + ECG_GRID_PHASE);
 
-        if (y >= ECG_GRID_TOP && y < ECG_GRID_BOTTOM)
-        {
-            uint16_t ry = y - ECG_GRID_TOP;
+        /* Papel de ECG: cuadrito chico cada 10 px, cuadro grande cada 50 px.
+           El orden importa: lo grueso siempre pisa lo fino. */
+        if (verticalGrid == 1u)  { color = ECG_GRID_FINE; }
+        if ((ry % 10u) == 0u)    { color = ECG_GRID_FINE; }
+        if (verticalGrid >= 2u)  { color = gridColor; }
+        if ((ry % 50u) == 0u)    { color = gridColor; }
 
-            /* Papel de ECG: cuadrito chico cada 10 px, cuadro grande cada
-               50 px. El orden importa: lo grueso siempre pisa lo fino. */
-            if (verticalGrid == 1u)  { color = ECG_GRID_FINE; }
-            if ((ry % 5u) == 0u)     { color = ECG_GRID_FINE; }
-            if (verticalGrid >= 2u)  { color = gridColor; }
-            if ((ry % 25u) == 0u)    { color = gridColor; }
-        }
-
-        if ((y >= yMin) && (y <= yMax)) { color = signalColor; }
+        if (((int16_t)y >= yMin) && ((int16_t)y <= yMax)) { color = signalColor; }
 
         LCD_Write8((color >> 8) & 0xFF);
         LCD_Write8(color & 0xFF);

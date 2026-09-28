@@ -1,0 +1,19 @@
+Registro real: 249 s. FC errónea = fuera de 55-85 lpm.
+
+                      |         limpio          |         sin ECG         |        artefacto       
+                      |   mostrada     errónea |   mostrada     errónea |   mostrada     errónea
+Detector anterior     |     100.0%        3.2% |     100.0%       78.6% |     100.0%       54.9%
+Referencia Python     |      81.9%        0.0% |       0.0%        0.0% |      18.2%        0.0%
+Código C (firmware)   |      81.9%        0.0% |       0.0%        0.0% |      18.2%        0.0%
+
+Coincidencia Python vs. C (FC publicada, muestra a muestra): 100.00 %
+
+ECG sintéticos (FC real conocida; errónea = más de 10 % de diferencia; se ignoran los primeros 15 s):
+  {'modulacion': 0.0}                              FC real  65 | mostrada 100.0 % | errónea  0.0 %
+  {'modulacion': 0.5}                              FC real  65 | mostrada 100.0 % | errónea  0.0 %
+  {'modulacion': 0.6, 'caidas': 0.1}               FC real  65 | mostrada 100.0 % | errónea  0.0 %
+  {'modulacion': 0.4, 'artefactos': 4}             FC real  65 | mostrada 100.0 % | errónea  0.0 %
+  {'modulacion': 0.6, 'caidas': 0.15, 'ruido': 25} FC real  65 | mostrada  99.1 % | errónea  0.0 %
+  {'modulacion': 0.3, 'T': 250, 'ruido': 20}       FC real  65 | mostrada 100.0 % | errónea  0.0 %
+  {'modulacion': 0.5, 'fc': 110, 'T': 150}         FC real 110 | mostrada 100.0 % | errónea  0.0 %
+  {'modulacion': 0.5, 'fc': 45}                    FC real  45 | mostrada 100.0 % | errónea  0.0 %
