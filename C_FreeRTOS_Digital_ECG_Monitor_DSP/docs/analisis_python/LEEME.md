@@ -26,10 +26,28 @@ python generar_todo.py
 Genera todas las figuras en `figuras/` y la tabla de validación en
 `resultados/validacion.txt` (tarda alrededor de un minuto).
 
-## 3. Qué hace cada archivo
+## 3. Después de cada prueba con la placa
+
+Copiar de la microSD el archivo de la sesión (`ECG_0001.CSV`, `ECG_0002.CSV`, …;
+el número es `sd_file_num` en Live Expressions) y correr:
+
+```
+python analizar_registro.py D:\ECG_0001.CSV --mostrar
+python analizar_registro.py D:\ECG_0001.CSV --desde 30 --hasta 40
+```
+
+Informa qué porcentaje del tiempo hubo LEAD OFF, ruido y señal limpia, y la
+mediana, el mínimo y el máximo de FC, R-R, QRS y onda R con señal limpia.
+Además vuelve a calcular la FC en la PC con el mismo detector y la compara
+con la que guardó la placa: más de 90 % de coincidencia indica que el
+firmware funciona igual que el modelo. Deja la figura en
+`figuras/sesion_ECG_0001.png` y el resumen en `resultados/sesion_ECG_0001.txt`.
+
+## 4. Qué hace cada archivo
 
 | Archivo | Qué hace | Figuras del informe |
 |---|---|---|
+| `analizar_registro.py` | Resumen y comparación placa vs. PC de una sesión nueva de la SD | — |
 | `ecg_comun.py` | Coeficientes de los filtros (iguales al firmware), lectura del CSV, ECG sintético, tramos del registro | — (lo usan los demás) |
 | `detector_ref.py` | Detector de QRS + SQI en Python (copia de `ecg_qrs.c`) y el detector anterior | — |
 | `graficos_filtros.py` | Respuesta en frecuencia de los filtros, coeficientes del FIR y efecto del filtrado | 8, 9, 10 |
@@ -46,7 +64,7 @@ Cada script tiene al principio una explicación detallada y acepta `--help`:
 python graficos_ecg.py --help
 ```
 
-## 4. Ejemplos
+## 5. Ejemplos
 
 Ver las figuras en pantalla (además de guardarlas):
 
@@ -76,7 +94,7 @@ Probar otro parámetro del detector: cambiar las constantes al principio de
 para ver cómo cambia la tabla. Si el cambio sirve, hay que hacer el mismo
 cambio en `Core/Src/ecg_qrs.c` y verificar con `correr_detector_c.py`.
 
-## 5. Notas
+## 6. Notas
 
 - La columna `adc` (formato viejo) o `ecg` (formato nuevo) del CSV es el ECG
   **ya filtrado** por el equipo, en counts del ADC (1 mV ≈ 1365 counts).

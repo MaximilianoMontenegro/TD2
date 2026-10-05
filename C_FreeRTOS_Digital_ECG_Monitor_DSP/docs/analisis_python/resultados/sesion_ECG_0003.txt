@@ -1,0 +1,17 @@
+Sesión ECG_0003: 348.0 s (5.8 min)
+
+1) Calidad de la señal (según el equipo)
+   electrodo suelto (LEAD OFF):   2.7 % del tiempo
+   ruido / sin señal útil     :  24.7 %
+   señal limpia (OK)          :  72.5 %
+
+2) Mediciones del equipo durante la señal limpia
+   FC     : mediana   76.00 lpm | mín   68.00 | máx   87.00   (referencia 60 a 100)
+   R-R    : mediana  788.00 ms  | mín  688.00 | máx  888.00   (referencia 600 a 1000)
+   QRS    : mediana   59.00 ms  | mín   49.00 | máx   72.00   (referencia < 120)
+   Onda R : mediana    1.55 mV  | mín    1.34 | máx    1.77   (referencia 0,5 a 2,0)
+
+3) Comparación placa vs. PC (FC segundo a segundo)
+   coinciden en mostrar / no mostrar FC: 100.0 % de los segundos
+   cuando ambos muestran FC, difieren ≤ 2 lpm el  98.8 %
+   (más de 90 % = el firmware hace lo mismo que el modelo; ver la explicación al principio del script)
